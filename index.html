@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body style="margin:0">
+<title>Llama Head Roll</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800&display=swap">
+<style>
+  /* Layout: full-bleed canvas world; HUD pinned to the top corners, one centred card for title and game over. */
+  :root {
+    --sky: #2aa7b8;
+    --wool: #f7edd8;
+    --wool-shade: #e4d2ad;
+    --ink: #2b1a2f;
+    --pink: #e6327a;
+    --teal: #0f7f86;
+    --maize: #f4c430;
+    --earth: #b5652d;
+    --display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+    --body: "Nunito", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    color-scheme: light;
+  }
+  html, body { height: 100%; }
+  body { background: var(--sky); color: var(--ink); font-family: var(--body); font-weight: 600; overflow: hidden; }
+  #game { position: relative; height: 100%; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; }
+  #c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #ui {
+    position: absolute; inset: 0; display: flex; flex-direction: column; pointer-events: none;
+    padding-block: 12px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  #hud { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .chip { background: var(--ink); color: var(--wool); border-radius: 14px; padding: 8px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .label { font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.75; }
+  #dist { font-family: var(--display); font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: 14px; align-items: baseline; font-variant-numeric: tabular-nums; }
+  .row b { font-family: var(--display); font-weight: 400; font-size: 18px; color: var(--maize); }
+  #right { align-items: flex-end; min-width: 132px; }
+  #hearts { font-size: 20px; line-height: 1; letter-spacing: 3px; color: var(--pink); }
+  #hearts .lost { color: var(--wool); opacity: 0.25; }
+  #stormbar { width: 100%; height: 8px; border-radius: 4px; background: rgba(247, 237, 216, 0.2); overflow: hidden; }
+  #stormfill { height: 100%; width: 0%; background: var(--maize); border-radius: 4px; }
+  #stormfill.near { background: var(--pink); }
+
+  #center { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0; }
+  #card {
+    pointer-events: auto; width: min(420px, 100%); background: var(--wool); border-radius: 22px; overflow: hidden;
+    box-shadow: 0 10px 0 rgba(43, 26, 47, 0.35); text-align: center;
+  }
+  /* Woven band, like the edge of an aguayo cloth */
+  .band {
+    height: 18px;
+    background:
+      linear-gradient(135deg, var(--wool) 25%, transparent 25%) -9px 0 / 18px 18px,
+      linear-gradient(225deg, var(--wool) 25%, transparent 25%) -9px 0 / 18px 18px,
+      linear-gradient(315deg, var(--teal) 25%, transparent 25%) 0 0 / 18px 18px,
+      linear-gradient(45deg, var(--teal) 25%, var(--pink) 25%) 0 0 / 18px 18px;
+  }
+  .inner { padding: 22px 24px 26px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(34px, 9vw, 46px); line-height: 1; margin: 0; text-wrap: balance; color: var(--ink); }
+  #sub { margin: 0; font-size: 16px; line-height: 1.45; max-width: 32ch; }
+  #result { font-family: var(--display); font-size: 22px; color: var(--teal); font-variant-numeric: tabular-nums; }
+  #keys { margin: 0; font-size: 13px; line-height: 1.5; opacity: 0.8; }
+  kbd { font-family: var(--body); font-weight: 800; font-size: 12px; background: var(--wool-shade); border-radius: 6px; padding: 1px 6px; }
+  #go {
+    font-family: var(--display); font-size: 22px; color: var(--wool); background: var(--pink); border: 0; border-radius: 14px;
+    padding: 12px 34px; cursor: pointer; box-shadow: 0 5px 0 #a81f56; margin-top: 4px;
+  }
+  #go:active { transform: translateY(3px); box-shadow: 0 2px 0 #a81f56; }
+  #go:focus-visible, .pad:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+  #paused { align-self: center; background: var(--ink); color: var(--wool); border-radius: 999px; padding: 6px 16px; font-weight: 800; }
+
+  #pads { display: none; justify-content: space-between; align-items: flex-end; padding-bottom: 8px; }
+  .pad {
+    pointer-events: auto; width: 76px; height: 76px; border-radius: 50%; border: 3px solid var(--ink);
+    background: rgba(247, 237, 216, 0.82); color: var(--ink); font-family: var(--display); font-size: 26px; touch-action: none;
+  }
+  .pad.on { background: var(--maize); }
+  #pj { width: 92px; height: 92px; font-size: 20px; }
+  .lr { display: flex; gap: 14px; }
+  @media (hover: none), (pointer: coarse) {
+    #pads { display: flex; }
+    #keys { display: none; }
+  }
+</style>
+
+<div id="game">
+  <canvas id="c" aria-label="Llama Head Roll game"></canvas>
+  <div id="ui">
+    <div id="hud">
+      <div class="chip">
+        <span class="label">Distance</span>
+        <span id="dist">0 m</span>
+        <span class="row"><span>Corn <b id="corn">0</b></span><span>Best <b id="best">0</b></span></span>
+      </div>
+      <div class="chip" id="right">
+        <span id="hearts" aria-label="Lives"></span>
+        <span class="label">Storm</span>
+        <div id="stormbar"><div id="stormfill"></div></div>
+      </div>
+    </div>
+    <div id="center">
+      <div id="card">
+        <div class="band"></div>
+        <div class="inner">
+          <h1 id="title">Llama Head Roll</h1>
+          <p id="sub">Outroll the dust storm. Hop the cacti. Eat the corn.</p>
+          <div id="result" hidden></div>
+          <p id="keys"><kbd>←</kbd> <kbd>→</kbd> roll &nbsp; <kbd>Space</kbd> hop &nbsp; <kbd>P</kbd> pause &nbsp; <kbd>M</kbd> mute</p>
+          <button id="go" type="button">Roll</button>
+        </div>
+      </div>
+      <div id="paused" hidden>Paused. Press P to carry on.</div>
+    </div>
+    <div id="pads">
+      <div class="lr">
+        <button class="pad" id="pl" type="button" aria-label="Roll left">◀</button>
+        <button class="pad" id="pr" type="button" aria-label="Roll right">▶</button>
+      </div>
+      <button class="pad" id="pj" type="button" aria-label="Hop">HOP</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const cv = $('c'), ctx = cv.getContext('2d');
+  const R = 30, GRAV = 1800, JUMP = 700, M = 50; // M: world units per metre
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let W = 1, H = 1, S = 1, DPR = 1;
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = Math.max(1, r.width); H = Math.max(1, r.height);
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    S = Math.min(H / 720, W / 760);
+  }
+  addEventListener('resize', resize);
+  resize();
+
+  // ---------- terrain ----------
+  let ph = [0, 0, 0];
+  function g(x) {
+    const a = 0.3 + 0.7 * Math.min(1, Math.max(0, (x - 300) / 2600));
+    return 460 - a * (90 * Math.sin(x * 0.0021 + ph[0]) + 55 * Math.sin(x * 0.0047 + ph[1]) + 22 * Math.sin(x * 0.011 + ph[2]));
+  }
+  const slope = x => (g(x + 1) - g(x - 1)) / 2;
+
+  // ---------- state ----------
+  let state = 'title', paused = false, muted = false, t = 0;
+  let P, cam, items, parts, nextGen, stormX, maxX, corn, bonus, hearts, shake, overWhy;
+  let best = 0;
+  try { best = +localStorage.getItem('llamaRollBest') || 0; } catch (e) {}
+  const input = { l: false, r: false, j: false, buf: 0 };
+
+  function reset() {
+    ph = [Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28];
+    P = { x: 0, y: 0, vx: 0, vy: 0, ang: 0, om: 0, ground: 0, inv: 0, boost: 0, jumping: false };
+    P.y = g(0) - R;
+    cam = { x: 0, y: P.y - 400 };
+    items = []; parts = []; nextGen = 900;
+    stormX = -700; maxX = 0; corn = 0; bonus = 0; hearts = 3; shake = 0;
+  }
+  reset();
+
+  // ---------- sound ----------
+  let ac = null;
+  function beep(f, dur, type, vol, slide) {
+    if (muted || !ac) return;
+    try {
+      const o = ac.createOscillator(), gn = ac.createGain(), n = ac.currentTime;
+      o.type = type || 'square'; o.frequency.setValueAtTime(f, n);
+      if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f * slide), n + dur);
+      gn.gain.setValueAtTime(vol || 0.06, n); gn.gain.exponentialRampToValueAtTime(0.0001, n + dur);
+      o.connect(gn); gn.connect(ac.destination); o.start(n); o.stop(n + dur);
+    } catch (e) {}
+  }
+
+  // ---------- world generation ----------
+  function cornArc(x, n, lift) {
+    for (let i = 0; i < n; i++) {
+      const xi = x + i * 46, arc = n > 1 ? Math.sin(i / (n - 1) * Math.PI) : 1;
+      items.push({ t: 'corn', x: xi, y: g(xi) - 44 - lift * arc });
+    }
+  }
+  function gen() {
+    const x = nextGen, d = x / M, r = Math.random();
+    const cactusP = Math.min(0.5, 0.22 + d / 2500);
+    let span = 0;
+    if (r < cactusP) {
+      const n = d > 250 && Math.random() < 0.3 ? 2 : 1;
+      for (let i = 0; i < n; i++) items.push({ t: 'cactus', x: x + 60 + i * 44, h: 50 + Math.random() * 30 });
+      if (Math.random() < 0.6) cornArc(x - 9, 4, 120);
+      span = 140;
+    } else if (r < cactusP + 0.07) {
+      items.push({ t: 'chili', x, y: g(x) - 120 });
+      span = 60;
+    } else {
+      const n = 3 + (Math.random() * 4 | 0);
+      cornArc(x, n, Math.random() < 0.4 ? 90 : 0);
+      span = n * 46;
+    }
+    nextGen += span + Math.max(170, 420 - d * 0.25) * (0.7 + Math.random() * 0.7);
+  }
+
+  function puff(x, y, n, col, sp, size) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * 6.28, v = sp * (0.3 + Math.random() * 0.7);
+      parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - sp * 0.3, life: 0, max: 0.35 + Math.random() * 0.4, col, size: size * (0.5 + Math.random()) });
+    }
+  }
+
+  // ---------- simulation ----------
+  function step(dt) {
+    const p = P, boost = p.boost > 0;
+    let dir = (input.r ? 1 : 0) - (input.l ? 1 : 0);
+    if (boost && dir === 0) dir = 1;
+    const grounded = p.ground > 0;
+
+    p.vy += GRAV * dt;
+    let s = slope(p.x), len = Math.hypot(1, s);
+    if (dir) {
+      const acc = (grounded ? 950 : 340) * (boost ? 1.6 : 1), vmax = boost ? 860 : 580;
+      const tx = grounded ? 1 / len : 1, ty = grounded ? s / len : 0;
+      if ((p.vx * tx + p.vy * ty) * dir < vmax) { p.vx += tx * dir * acc * dt; p.vy += ty * dir * acc * dt; }
+    }
+    input.buf -= dt;
+    if (input.buf > 0 && grounded) {
+      p.vy = Math.min(p.vy, 0) - JUMP; p.vx += (s / len) * JUMP * 0.25;
+      p.ground = 0; input.buf = 0; p.jumping = true;
+      beep(330, 0.16, 'square', 0.05, 1.9);
+      puff(p.x, p.y + R, 6, '#e9c58f', 120, 7);
+    }
+    p.x += p.vx * dt; p.y += p.vy * dt;
+
+    s = slope(p.x); len = Math.hypot(1, s);
+    const nx = s / len, ny = -1 / len, dist = (g(p.x) - p.y) / len;
+    if (dist < R) {
+      p.x += nx * (R - dist); p.y += ny * (R - dist);
+      const vn = p.vx * nx + p.vy * ny;
+      if (vn < 0) {
+        const e = vn < -420 ? 0.22 : 0;
+        p.vx -= (1 + e) * vn * nx; p.vy -= (1 + e) * vn * ny;
+        if (vn < -480) { puff(p.x, p.y + R, 10, '#e9c58f', 170, 8); beep(90, 0.12, 'triangle', 0.09, 0.5); shake = Math.max(shake, 5); }
+        p.jumping = false;
+      }
+      const k = 1 - 0.3 * dt; p.vx *= k; p.vy *= k;
+      p.om = (p.vx / len + p.vy * s / len) / R;
+      p.ground = 0.1;
+      if (Math.abs(p.vx) > 330 && Math.random() < 0.25) puff(p.x - Math.sign(p.vx) * 12, p.y + R, 1, '#e9c58f', 60, 6);
+    } else p.ground -= dt;
+    p.ang += p.om * dt;
+    p.inv -= dt; p.boost -= dt;
+    if (boost && Math.random() < 0.6) puff(p.x, p.y, 1, Math.random() < 0.5 ? '#ff8a2a' : '#f4c430', 90, 9);
+
+    // items
+    for (const it of items) {
+      if (it.gone) continue;
+      if (it.t === 'cactus') {
+        const base = g(it.x), cy = Math.max(base - it.h, Math.min(base, p.y));
+        if (Math.hypot(p.x - it.x, p.y - cy) < R + 13) {
+          if (boost) {
+            it.gone = true; bonus += 10; puff(it.x, base - it.h / 2, 16, '#3f9b4b', 320, 9); beep(160, 0.18, 'sawtooth', 0.07, 0.4);
+          } else if (p.inv <= 0) {
+            hearts--; p.inv = 1.5; shake = 14;
+            p.vx = (p.x < it.x ? -1 : 1) * 280; p.vy = -430; p.ground = 0;
+            puff(p.x, p.y, 12, '#f7edd8', 260, 7); beep(220, 0.3, 'sawtooth', 0.09, 0.3);
+            if (hearts <= 0) return end('spines');
+          }
+        }
+      } else if (Math.hypot(p.x - it.x, p.y - it.y) < R + 20) {
+        it.gone = true;
+        if (it.t === 'corn') { corn++; bonus += 5; puff(it.x, it.y, 6, '#f4c430', 150, 5); beep(880 + (corn % 5) * 110, 0.09, 'square', 0.04, 1.3); }
+        else { p.boost = 4; puff(it.x, it.y, 14, '#ff5a2a', 240, 8); beep(260, 0.4, 'sawtooth', 0.07, 3); }
+      }
+    }
+
+    // storm
+    const d = maxX / M;
+    stormX += (175 + Math.min(d * 0.25, 190)) * dt;
+    stormX = Math.max(stormX, p.x - 1000);
+    if (stormX > p.x - 8) return end('storm');
+    if (p.x > maxX) maxX = p.x;
+  }
+
+  function end(why) {
+    state = 'over'; overWhy = why;
+    const sc = score();
+    if (sc > best) { best = sc; try { localStorage.setItem('llamaRollBest', String(best)); } catch (e) {} }
+    beep(200, 0.6, 'triangle', 0.1, 0.25);
+    $('title').textContent = why === 'storm' ? 'Swallowed by the storm' : 'Too many spines';
+    $('sub').textContent = why === 'storm' ? 'The dust caught up. Keep your speed over the crests.' : 'Three cacti is the limit. Hop early, or grab a chili and smash through.';
+    $('result').hidden = false;
+    $('result').textContent = Math.floor(maxX / M) + ' m + ' + bonus + ' bonus = ' + sc;
+    $('go').textContent = 'Roll again';
+    $('card').hidden = false;
+    $('go').focus({ preventScroll: true });
+  }
+  const score = () => Math.floor(maxX / M) + bonus;
+
+  function start() {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (ac && ac.state === 'suspended') ac.resume();
+    reset(); state = 'play'; paused = false;
+    $('card').hidden = true; $('paused').hidden = true;
+    $('go').blur();
+  }
+  function setPaused(v) {
+    if (state !== 'play') return;
+    paused = v; $('paused').hidden = !v;
+  }
+
+  // ---------- input ----------
+  function press(k, down) {
+    if (k === 'j') {
+      if (down && !input.j) input.buf = 0.13;
+      if (!down && P.jumping && P.vy < -280) { P.vy *= 0.55; P.jumping = false; }
+      input.j = down;
+    } else input[k] = down;
+  }
+  const KEYS = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', Space: 'j', ArrowUp: 'j', KeyW: 'j' };
+  addEventListener('keydown', e => {
+    if (e.code in KEYS) { e.preventDefault(); if (!e.repeat) press(KEYS[e.code], true); }
+    if (e.repeat) return;
+    if ((e.code === 'Enter' || e.code === 'Space') && state !== 'play') { e.preventDefault(); start(); }
+    else if (e.code === 'KeyP') setPaused(!paused);
+    else if (e.code === 'KeyM') muted = !muted;
+  });
+  addEventListener('keyup', e => { if (e.code in KEYS) press(KEYS[e.code], false); });
+  for (const [id, k] of [['pl', 'l'], ['pr', 'r'], ['pj', 'j']]) {
+    const b = $(id);
+    const set = (e, v) => { e.preventDefault(); press(k, v); b.classList.toggle('on', v); if (v) { try { b.setPointerCapture(e.pointerId); } catch (x) {} } };
+    b.addEventListener('pointerdown', e => set(e, true));
+    b.addEventListener('pointerup', e => set(e, false));
+    b.addEventListener('pointercancel', e => set(e, false));
+    b.addEventListener('contextmenu', e => e.preventDefault());
+  }
+  $('go').addEventListener('click', start);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) setPaused(true); });
+
+  // ---------- drawing ----------
+  function ridge(f, base, amp, col, k) {
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
+    for (let sx = 0; sx <= W + 16; sx += 16) {
+      const wx = sx / S + cam.x * f;
+      const y = base - amp * (0.6 * Math.abs(Math.sin(wx * 0.0016 * k + 1.3)) + 0.4 * Math.abs(Math.sin(wx * 0.0037 * k + 4)) + 0.12 * Math.sin(wx * 0.011 * k));
+      ctx.lineTo(sx, y * H);
+    }
+    ctx.lineTo(W + 16, H); ctx.fill();
+  }
+
+  function drawLlama(p) {
+    ctx.save(); ctx.translate(p.x, p.y);
+    if (p.boost > 0) {
+      ctx.fillStyle = 'rgba(255,138,42,0.35)'; ctx.beginPath(); ctx.arc(0, 0, R + 10 + 3 * Math.sin(t * 30), 0, 6.29); ctx.fill();
+    }
+    if (p.inv > 0 && Math.floor(t * 14) % 2) ctx.globalAlpha = 0.4;
+    ctx.rotate(p.ang);
+    // ears
+    for (const sx of [-1, 1]) {
+      ctx.save(); ctx.translate(sx * 13, -24); ctx.rotate(sx * 0.28);
+      ctx.fillStyle = '#e4d2ad'; ctx.beginPath(); ctx.ellipse(0, -12, 7, 17, 0, 0, 6.29); ctx.fill();
+      ctx.fillStyle = '#e9a3a8'; ctx.beginPath(); ctx.ellipse(0, -11, 3.2, 11, 0, 0, 6.29); ctx.fill();
+      ctx.restore();
+    }
+    // ear tassel, the yarn marker herders tie on
+    ctx.fillStyle = '#e6327a'; ctx.beginPath(); ctx.arc(21, -40, 5.5, 0, 6.29); ctx.fill();
+    ctx.fillStyle = '#0f7f86'; ctx.beginPath(); ctx.arc(25, -33, 3.5, 0, 6.29); ctx.fill();
+    // wool
+    ctx.fillStyle = '#e4d2ad';
+    for (let i = 0; i < 11; i++) { const a = i / 11 * 6.283; ctx.beginPath(); ctx.arc(Math.cos(a) * 23, Math.sin(a) * 23, 9.5, 0, 6.29); ctx.fill(); }
+    ctx.fillStyle = '#f7edd8'; ctx.beginPath(); ctx.arc(0, 0, 26, 0, 6.29); ctx.fill();
+    for (const [x, y, r] of [[-8, -24, 8], [2, -27, 9], [11, -23, 7]]) { ctx.beginPath(); ctx.arc(x, y, r, 0, 6.29); ctx.fill(); }
+    // snout
+    ctx.fillStyle = '#fffaf0'; ctx.beginPath(); ctx.ellipse(0, 10, 14, 11, 0, 0, 6.29); ctx.fill();
+    ctx.strokeStyle = '#2b1a2f'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(-3.5, 4); ctx.lineTo(0, 8); ctx.lineTo(3.5, 4); ctx.moveTo(0, 8); ctx.lineTo(0, 13);
+    ctx.moveTo(-6, 14); ctx.quadraticCurveTo(0, 19, 6, 14); ctx.stroke();
+    // eyes: go spiral-dizzy at speed
+    const dizzy = Math.abs(p.om) > 15;
+    for (const sx of [-1, 1]) {
+      const ex = sx * 12, ey = -6;
+      if (dizzy) {
+        ctx.beginPath();
+        for (let a = 0; a < 11; a += 0.5) { const rr = a * 0.5; ctx.lineTo(ex + Math.cos(a) * rr, ey + Math.sin(a) * rr); }
+        ctx.lineWidth = 1.6; ctx.stroke();
+      } else {
+        ctx.fillStyle = '#2b1a2f'; ctx.beginPath(); ctx.arc(ex, ey, 4.2, 0, 6.29); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ex + 1.3, ey - 1.5, 1.4, 0, 6.29); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawCactus(it) {
+    const b = g(it.x) + 4, h = it.h;
+    ctx.strokeStyle = '#2f7d3d'; ctx.lineCap = 'round';
+    ctx.lineWidth = 20; ctx.beginPath(); ctx.moveTo(it.x, b); ctx.lineTo(it.x, b - h + 8); ctx.stroke();
+    ctx.lineWidth = 11; ctx.beginPath();
+    ctx.moveTo(it.x, b - h * 0.4); ctx.lineTo(it.x - 19, b - h * 0.4); ctx.lineTo(it.x - 19, b - h * 0.72);
+    ctx.moveTo(it.x, b - h * 0.55); ctx.lineTo(it.x + 18, b - h * 0.55); ctx.lineTo(it.x + 18, b - h * 0.86); ctx.stroke();
+    ctx.strokeStyle = '#58b566'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(it.x - 4, b - 6); ctx.lineTo(it.x - 4, b - h + 10); ctx.stroke();
+    ctx.fillStyle = '#e6327a'; ctx.beginPath(); ctx.arc(it.x + 2, b - h - 2, 5, 0, 6.29); ctx.fill();
+  }
+
+  function drawItem(it) {
+    if (it.t === 'cactus') return drawCactus(it);
+    const y = it.y + Math.sin(t * 4 + it.x * 0.05) * 4;
+    ctx.save(); ctx.translate(it.x, y);
+    if (it.t === 'corn') {
+      ctx.rotate(0.35);
+      ctx.fillStyle = '#4c9a3c'; ctx.beginPath(); ctx.ellipse(-5, 6, 6, 13, -0.5, 0, 6.29); ctx.ellipse(5, 6, 6, 13, 0.5, 0, 6.29); ctx.fill();
+      ctx.fillStyle = '#f4c430'; ctx.beginPath(); ctx.ellipse(0, -2, 7.5, 14, 0, 0, 6.29); ctx.fill();
+      ctx.fillStyle = '#d99a12';
+      for (let r = -2; r <= 2; r++) for (let c = -1; c <= 1; c++) { ctx.beginPath(); ctx.arc(c * 4, -2 + r * 4.6, 1, 0, 6.29); ctx.fill(); }
+    } else {
+      ctx.fillStyle = 'rgba(255,138,42,0.3)'; ctx.beginPath(); ctx.arc(0, 0, 24 + 3 * Math.sin(t * 8), 0, 6.29); ctx.fill();
+      ctx.rotate(-0.6);
+      ctx.fillStyle = '#e0261c'; ctx.beginPath(); ctx.moveTo(-9, -12);
+      ctx.quadraticCurveTo(14, -12, 6, 18); ctx.quadraticCurveTo(-4, 4, -9, -12); ctx.fill();
+      ctx.strokeStyle = '#2f7d3d'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(-3, -12); ctx.lineTo(-7, -20); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#1f93ac'); sky.addColorStop(0.55, '#8fd0c4'); sky.addColorStop(0.85, '#ffd9a0');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff3c4'; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.2, Math.min(W, H) * 0.07, 0, 6.29); ctx.fill();
+    ridge(0.06, 0.62, 0.36, '#6fb3b8', 1);
+    ridge(0.15, 0.72, 0.3, '#4f8f9a', 1.7);
+    ridge(0.32, 0.86, 0.22, '#c98a4b', 2.3);
+
+    const vw = W / S, vh = H / S;
+    const shx = reduceMotion ? 0 : (Math.random() - 0.5) * shake, shy = reduceMotion ? 0 : (Math.random() - 0.5) * shake;
+    ctx.save(); ctx.scale(S, S); ctx.translate(-cam.x + shx, -cam.y + shy);
+    const x0 = Math.floor((cam.x - 30) / 12) * 12, x1 = cam.x + vw + 30, yb = cam.y + vh + 40;
+
+    // ground
+    ctx.beginPath(); ctx.moveTo(x0, yb);
+    for (let x = x0; x <= x1; x += 12) ctx.lineTo(x, g(x));
+    ctx.lineTo(x1, yb); ctx.closePath();
+    const eg = ctx.createLinearGradient(0, cam.y + vh * 0.4, 0, yb);
+    eg.addColorStop(0, '#b5652d'); eg.addColorStop(1, '#7c3f1e');
+    ctx.fillStyle = eg; ctx.fill();
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath(); for (let x = x0; x <= x1; x += 12) ctx.lineTo(x, g(x) + 5);
+    ctx.strokeStyle = '#d9b03c'; ctx.lineWidth = 14; ctx.stroke();
+    // ichu grass tufts and distance posts
+    ctx.strokeStyle = '#eccb5e'; ctx.lineWidth = 3;
+    for (let x = Math.floor(x0 / 70) * 70; x <= x1; x += 70) {
+      const hsh = Math.abs(Math.sin(x * 12.9898) * 43758.5453) % 1;
+      if (hsh < 0.55) continue;
+      const tx = x + hsh * 40, ty = g(tx);
+      ctx.beginPath();
+      for (let i = -2; i <= 2; i++) { ctx.moveTo(tx, ty + 2); ctx.lineTo(tx + i * 5, ty - 12 - hsh * 8 + Math.abs(i) * 3); }
+      ctx.stroke();
+    }
+    ctx.font = '400 20px "Lilita One", "Arial Rounded MT Bold", sans-serif'; ctx.textAlign = 'center';
+    for (let m = Math.max(100, Math.ceil(x0 / M / 100) * 100); m * M <= x1; m += 100) {
+      const px = m * M, py = g(px);
+      ctx.fillStyle = '#5a2f17'; ctx.fillRect(px - 3, py - 46, 6, 50);
+      ctx.fillStyle = '#f7edd8'; ctx.fillRect(px - 34, py - 72, 68, 28);
+      ctx.fillStyle = '#2b1a2f'; ctx.fillText(m + ' m', px, py - 51);
+    }
+
+    for (const it of items) if (!it.gone && it.x > x0 - 60 && it.x < x1 + 60) drawItem(it);
+    drawLlama(P);
+    for (const q of parts) {
+      ctx.globalAlpha = Math.max(0, 1 - q.life / q.max); ctx.fillStyle = q.col;
+      ctx.beginPath(); ctx.arc(q.x, q.y, q.size, 0, 6.29); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // dust storm
+    if (stormX > cam.x - 260) {
+      const hz = ctx.createLinearGradient(stormX, 0, stormX + 260, 0);
+      hz.addColorStop(0, 'rgba(150,96,52,0.55)'); hz.addColorStop(1, 'rgba(150,96,52,0)');
+      ctx.fillStyle = hz; ctx.fillRect(stormX, cam.y - 40, 260, vh + 80);
+      ctx.fillStyle = '#7d4d2b'; ctx.fillRect(cam.x - 60, cam.y - 40, stormX - cam.x + 60, vh + 80);
+      for (let i = 0; i < 12; i++) {
+        const y = cam.y + (i / 11) * vh, r = 80 + 26 * Math.sin(t * 2.2 + i * 1.7);
+        ctx.fillStyle = i % 2 ? '#96633a' : '#7d4d2b';
+        ctx.beginPath(); ctx.arc(stormX + 24 * Math.sin(t * 1.6 + i * 2.1) - 10, y, r, 0, 6.29); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // ---------- HUD ----------
+  const hud = { d: -1, c: -1, b: -1, h: -1, s: -1 };
+  function updateHud() {
+    const d = Math.floor(maxX / M);
+    if (d !== hud.d) $('dist').textContent = (hud.d = d) + ' m';
+    if (corn !== hud.c) $('corn').textContent = hud.c = corn;
+    if (best !== hud.b) $('best').textContent = hud.b = best;
+    if (hearts !== hud.h) {
+      hud.h = hearts;
+      $('hearts').innerHTML = [0, 1, 2].map(i => '<span' + (i < hearts ? '' : ' class="lost"') + '>♥</span>').join('');
+    }
+    const near = Math.round(Math.max(0, Math.min(1, 1 - (P.x - stormX) / 1000)) * 100);
+    if (near !== hud.s) {
+      hud.s = near; $('stormfill').style.width = near + '%'; $('stormfill').classList.toggle('near', near > 65);
+    }
+  }
+
+  // ---------- loop ----------
+  let last = performance.now(), acc = 0;
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!paused) {
+      t += dt;
+      if (state === 'play') {
+        acc += dt;
+        while (acc >= 1 / 120 && state === 'play') { step(1 / 120); acc -= 1 / 120; }
+      } else if (state === 'title') { P.ang = Math.sin(t * 1.5) * 0.25; }
+      shake *= Math.pow(0.002, dt);
+      for (const q of parts) { q.life += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 500 * dt; }
+      parts = parts.filter(q => q.life < q.max);
+      const vw = W / S, vh = H / S;
+      cam.x = P.x - vw * 0.3;
+      cam.y += (P.y - vh * 0.56 - cam.y) * Math.min(1, dt * 5);
+      while (nextGen < cam.x + vw + 500) gen();
+      if (items.length > 80) items = items.filter(it => it.x > cam.x - 300);
+    }
+    render(); updateHud();
+    requestAnimationFrame(frame);
+  }
+  cam.y = P.y - (H / S) * 0.56;
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
