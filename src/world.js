@@ -175,7 +175,7 @@ makeBurrow(30, 8, -1.9, { hint: '' });
 makeBurrow(-20, 30, 2.4, { hint: 'They sleep better down here.<br>Count them. Then count again.' }, (b) => {
   const spots = [[-0.55, -0.5], [0.05, -0.85], [0.6, -0.45], [-0.12, -0.5], [0.35, -0.95]];
   spots.forEach(([hx, hz], i) => {
-    const h = makeHead(0xb9b7bd, i !== 3); h.scale.setScalar(0.8);
+    const h = makeHead(0xb9b7bd, true, i === 3); h.scale.setScalar(0.8);
     h.position.set(hx, 0.48 + (i === 4 ? 0.42 : 0), hz); h.rotation.set(rnd(-0.3, 0.3), Math.atan2(-hx, 0.95 - hz) + (i === 3 ? 0 : rnd(-1.2, 1.2)), rnd(-0.4, 0.4)); b.add(h);
   });
 });
