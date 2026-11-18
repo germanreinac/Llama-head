@@ -13,4 +13,4 @@ Open `index.html` in a browser. No install, no dependencies.
 
 ## Edit
 
-The game lives in `src/game.html`. Run `./build.sh` to regenerate `index.html`.
+The game lives in `game.html`. Run `./build.sh` to regenerate `index.html`.

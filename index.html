@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Headless in the Fog – prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <div id="vignette"></div>
+
+  <div id="hud">
+    <div>Memories</div>
+    <div class="dots" id="dots">○○○○○○</div>
+    <div class="who" id="who"></div>
+  </div>
+
+  <div id="pip"><div id="pipLabel"></div></div>
+  <div id="prompt"></div>
+  <div id="story"></div>
+
+  <div id="joy"><div id="knob"></div></div>
+  <div id="btns">
+    <button id="bF"></button>
+    <button id="bQ"></button>
+    <button id="bE" class="main"></button>
+    <button id="bJ">Hop</button>
+  </div>
+
+  <div class="overlay" id="intro">
+    <div class="panel">
+      <h1>Headless in the Fog</h1>
+      <div class="sub">Prototype · sphere-head llama · exploration</div>
+      <p>Your head comes off. Roll it where your body can't go, leave it somewhere to keep watch, or set it on something else and see what happens. Find the six lost heads in the fog.<br><i>Just don't leave yours alone for too long.</i></p>
+      <div class="controls" id="ctrlList"></div>
+      <button id="startBtn">Wander in</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="ending" style="display:none">
+    <div class="panel">
+      <h1>The flock</h1>
+      <p id="endText"></p>
+      <button id="endBtn">Keep wandering</button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

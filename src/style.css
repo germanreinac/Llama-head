@@ -1,0 +1,30 @@
+html,body{margin:0;height:100%;overflow:hidden;background:#1d2328;touch-action:none;-webkit-user-select:none;user-select:none;font-family:Inter,system-ui,sans-serif;color:#e8e4dc}
+  canvas{display:block;width:100vw;height:100vh;touch-action:none}
+  #vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 25%,rgba(5,6,8,.92) 80%);opacity:0;transition:opacity .6s}
+  #hud{position:fixed;top:12px;left:14px;pointer-events:none;font-size:12px;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 1px 3px #000}
+  #hud .dots{font-size:15px;letter-spacing:.25em;margin-top:2px}
+  #hud .who{margin-top:8px;opacity:.75}
+  #pip{position:fixed;top:12px;right:12px;border:1px solid rgba(255,255,255,.35);pointer-events:none;display:none;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+  #pip.warn{border-color:#d9534f;animation:pulse .8s infinite alternate}
+  @keyframes pulse{from{box-shadow:0 0 6px rgba(217,83,79,.3)}to{box-shadow:0 0 22px rgba(217,83,79,.9)}}
+  #pipLabel{position:absolute;left:6px;top:4px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;text-shadow:0 1px 2px #000}
+  #pip.warn #pipLabel{color:#ff9b96}
+  #prompt{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);font-size:13px;background:rgba(10,12,14,.55);padding:7px 14px;border-radius:20px;pointer-events:none;white-space:nowrap;opacity:0;transition:opacity .3s}
+  #story{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);width:min(560px,86vw);text-align:center;font-family:'IM Fell English',Georgia,serif;font-size:21px;line-height:1.35;text-shadow:0 2px 8px #000;pointer-events:none;opacity:0;transition:opacity 1s}
+  #story small{display:block;font-family:Inter,sans-serif;font-size:10px;letter-spacing:.15em;text-transform:uppercase;opacity:.6;margin-bottom:6px}
+  #story.alarm{color:#ffb3ad}
+  .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(14,17,20,.78);z-index:10}
+  .panel{max-width:520px;width:88vw;padding:28px 26px;text-align:center}
+  .panel h1{font-family:'IM Fell English',Georgia,serif;font-weight:400;font-size:40px;margin:0 0 4px}
+  .panel .sub{font-size:11px;letter-spacing:.15em;text-transform:uppercase;opacity:.6;margin-bottom:18px}
+  .panel p{font-family:'IM Fell English',Georgia,serif;font-size:18px;line-height:1.4;margin:0 0 18px}
+  .controls{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;text-align:left;font-size:13px;margin:0 auto 22px;max-width:360px}
+  .controls b{font-weight:600;color:#fff;white-space:nowrap}
+  .panel button{font:600 14px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;background:#e8e4dc;color:#15191c;border:0;border-radius:24px;padding:12px 30px;cursor:pointer}
+  #joy{position:fixed;left:22px;bottom:26px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);display:none;touch-action:none}
+  #knob{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.28);transform:translate(-50%,-50%)}
+  #btns{position:fixed;right:18px;bottom:26px;display:none;flex-direction:column;align-items:flex-end;gap:10px}
+  #btns button{min-width:74px;height:50px;border-radius:25px;border:1px solid rgba(255,255,255,.3);background:rgba(20,24,28,.6);color:#eee;font:600 12px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:0 16px;touch-action:none}
+  #btns button.main{background:rgba(232,228,220,.85);color:#15191c}
+  .touch #joy{display:block}.touch #btns{display:flex}
+  .touch #prompt{bottom:178px}.touch #story{bottom:230px}
