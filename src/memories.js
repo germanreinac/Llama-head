@@ -20,7 +20,7 @@ export const MEM_TEXT = [
 // [30,8] is inside a burrow (world.js): only a head peeking in can reach it.
 const SPOTS = [[5, 9], [-24, -22], [30, 8], [-34, 22], [8, -40], [38, -34]];
 
-const glow = radialTex('rgba(220,230,255,1)', 'rgba(190,205,240,.45)');
+const glow = radialTex('rgba(235,235,235,1)', 'rgba(210,210,210,.45)');
 export const memories = SPOTS.map(([x, z], i) => {
   const g = makeHead(0xb9b7bd, true), base = hAt(x, z) + HEAD_R;
   g.position.set(x, base, z); g.rotation.y = rnd(0, 6); scene.add(g);

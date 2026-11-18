@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { V3, rnd, hAt, d2, isTouch } from './utils.js';
-import { scene, lam } from './scene.js';
+import { scene, lam, grey } from './scene.js';
 import { addCircle, addBox } from './physics.js';
 import { makeLlamaBody, makeHead, radialTex } from './models.js';
 
@@ -37,7 +37,7 @@ function freeSpot(minR, maxR) {
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i); p.setY(i, hAt(x, z));
     const n = 0.5 + 0.5 * Math.sin(x * 0.8 + z * 0.3) * Math.cos(z * 0.7 - x * 0.2);
-    c.setRGB(0.15 + 0.05 * n, 0.2 + 0.06 * n, 0.13 + 0.03 * n); cols.push(c.r, c.g, c.b);
+    c.setRGB(0.17 + 0.05 * n, 0.17 + 0.05 * n, 0.17 + 0.05 * n); cols.push(c.r, c.g, c.b);
   }
   g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3)); g.computeVertexNormals();
   scene.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true })));
@@ -49,8 +49,6 @@ function freeSpot(minR, maxR) {
   const walls = new THREE.Mesh(new THREE.BoxGeometry(10, 6, 12), lam(0x55251f)); walls.position.y = 3; b.add(walls);
   const roof = new THREE.Mesh(new THREE.CylinderGeometry(5.8, 5.8, 12.6, 3), lam(0x2a2a2e)); roof.rotation.x = -Math.PI / 2; roof.position.y = 8.9; b.add(roof);
   const door = new THREE.Mesh(new THREE.BoxGeometry(3.4, 4.2, 0.1), lam(0x1a0e0c)); door.position.set(0, 2.1, 6.02); b.add(door);
-  const x1 = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.18, 0.12), lam(0x7a6a5a)); x1.position.set(0, 2.1, 6.1); x1.rotation.z = 0.85; b.add(x1);
-  const x2 = x1.clone(); x2.rotation.z = -0.85; b.add(x2);
   b.rotation.y = 0.3; scene.add(b);
   addCircle(20, -22, 6.6);
 }
@@ -110,10 +108,6 @@ fenceLine(-3, 6, -3, 16, 4, true);
   const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.2, 6), lam(0x4a3f33)); bar.rotation.z = Math.PI / 2; bar.position.y = 2.6; s.add(bar);
   const shirt = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.1, 0.35), lam(0x43394f)); shirt.position.y = 2.35; s.add(shirt);
   const sleeves = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.3, 0.3), lam(0x43394f)); sleeves.position.y = 2.6; s.add(sleeves);
-  for (const sx of [-1, 1]) {
-    const st = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.35, 5), lam(0x9c8a52)); st.position.set(sx * 1.12, 2.5, 0); st.rotation.z = sx * 1.8; s.add(st);
-  }
-  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.2, 8), lam(0x3a3020)); hat.position.set(0.35, 0.1, 0.5); hat.rotation.z = 1.2; s.add(hat);
   s.rotation.y = 0.6; scene.add(s);
   addHost(s, new V3(0, 3.25, 0), { label: 'the scarecrow' }); addCircle(-12, 14, 0.4);
 }
@@ -125,9 +119,6 @@ export const cowLegs = [];
 {
   cow.position.set(16, hAt(16, 12), 12); cow.add(cowBody);
   cowBody.add(new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.95, 2.3), lam(0xd6d0c4)));
-  for (const [x, y, z, w, h, d] of [[0.76, 0.1, 0.2, 0.02, 0.6, 0.9], [-0.76, 0, -0.5, 0.02, 0.5, 0.7], [0.2, 0.48, -0.3, 0.8, 0.02, 0.7]]) {
-    const p = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), lam(0x1d1b1a)); p.position.set(x, y, z); cowBody.add(p);
-  }
   const neck = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.5), lam(0xd6d0c4)); neck.position.set(0, 0.25, 1.35); cowBody.add(neck);
   const stump = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, 0.04), lam(0x4a2f2f)); stump.position.set(0, 0.25, 1.61); cowBody.add(stump);
   cowBody.position.y = 0.5;
@@ -165,7 +156,7 @@ addCircle(0, 0, 1.6, tractor);
 
 // --- burrows: mounds only a head fits into. Sit inside to peek around. ---
 const BURROW_R = 1.6;
-const earth = new THREE.MeshLambertMaterial({ color: 0x3a3128, side: THREE.DoubleSide });
+const earth = new THREE.MeshLambertMaterial({ color: grey(0x3a3128), side: THREE.DoubleSide });
 /** Hollow mound with an opening facing local +Z. `fill(group)` adds whatever is inside. */
 export function makeBurrow(x, z, yaw, opts, fill) {
   const b = new THREE.Group(); b.position.set(x, hAt(x, z) - 0.08, z); b.rotation.y = yaw;
@@ -199,7 +190,7 @@ for (const [x, z] of [[-6, 27], [26, 30], [-38, 0], [34, -6]]) {
 // --- drifting fog wisps ---
 export const wisps = [];
 {
-  const tex = radialTex('rgba(200,210,220,.5)', null, 128);
+  const tex = radialTex('rgba(210,210,210,.5)', null, 128);
   for (let i = 0; i < 46; i++) {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: rnd(0.08, 0.18) }));
     const sc = rnd(8, 16); s.scale.set(sc, sc * 0.45, 1); s.position.set(rnd(-50, 50), rnd(0.6, 2.2), rnd(-50, 50));

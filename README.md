@@ -13,7 +13,7 @@ A browser prototype of a foggy, creepy exploration game. You're a llama whose sp
 - **Six lost heads** glow in the fog. Each one gives you a fragment of the story. When you find all six, the flock appears.
 - **The collector.** A tall figure that takes heads nobody is watching. If it steals yours, chase it down with your blind body.
 
-All models are placeholder primitives.
+All models are grey placeholder primitives (greybox). No art direction yet.
 
 ## Controls
 

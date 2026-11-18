@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { V3, rnd } from './utils.js';
+import { V3 } from './utils.js';
 import { lam, basic, unitSph } from './scene.js';
 
 /** Placeholder llama body (no head). Origin at the feet, facing +Z. */
@@ -7,11 +7,6 @@ export function makeLlamaBody(col) {
   const g = new THREE.Group(), m = lam(col);
   const body = new THREE.Mesh(new THREE.SphereGeometry(0.6, 14, 10), m);
   body.scale.set(0.75, 0.72, 1.25); body.position.y = 1.15; g.add(body);
-  // Fluff bumps
-  for (let i = 0; i < 7; i++) {
-    const b = new THREE.Mesh(unitSph, m);
-    b.position.set(rnd(-0.28, 0.28), rnd(1.3, 1.45), rnd(-0.55, 0.55)); b.scale.setScalar(rnd(0.2, 0.28)); g.add(b);
-  }
   const legs = [], lg = new THREE.CylinderGeometry(0.07, 0.06, 0.95, 6); lg.translate(0, -0.475, 0);
   for (const [x, z] of [[0.22, 0.45], [-0.22, -0.45], [-0.22, 0.45], [0.22, -0.45]]) {
     const l = new THREE.Mesh(lg, m); l.position.set(x, 1.0, z); g.add(l); legs.push(l);
@@ -52,7 +47,7 @@ export function radialTex(inner, mid, size = 64) {
   const gr = x.createRadialGradient(h, h, 0, h, h, h);
   gr.addColorStop(0, inner);
   if (mid) gr.addColorStop(0.3, mid);
-  gr.addColorStop(1, 'rgba(190,205,240,0)');
+  gr.addColorStop(1, 'rgba(210,210,210,0)');
   x.fillStyle = gr; x.fillRect(0, 0, size, size);
   return new THREE.CanvasTexture(c);
 }
