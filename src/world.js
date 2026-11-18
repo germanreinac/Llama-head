@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { V3, rnd, hAt, d2, isTouch } from './utils.js';
 import { scene, lam } from './scene.js';
 import { addCircle, addBox } from './physics.js';
-import { makeLlamaBody, radialTex } from './models.js';
+import { makeLlamaBody, makeHead, radialTex } from './models.js';
 
 // ---------------------------------------------------------------------------
 // Hosts: things the head can sit on. Static ones give a new viewpoint,
@@ -10,7 +10,8 @@ import { makeLlamaBody, radialTex } from './models.js';
 // ---------------------------------------------------------------------------
 export const hosts = [];
 export function addHost(obj, seat, opts) {
-  const h = Object.assign({ obj, seat, drivable: false, speed: 0, speedNow: 0, label: 'it' }, opts);
+  // verb/btn: prompt wording. who: HUD label. hint: line shown the first time (null = default).
+  const h = Object.assign({ obj, seat, drivable: false, speed: 0, speedNow: 0, label: 'it', verb: 'sit on', btn: 'Sit on', who: null, hint: null }, opts);
   hosts.push(h);
   return h;
 }
@@ -20,7 +21,7 @@ export function seatWorld(h) {
 }
 
 // Spots that random props must keep clear of: [x, z, radius]
-const avoid = [[0, 0, 6], [20, -22, 9], [-24, -22, 11], [-12, 14, 3], [16, 12, 4], [-6, -22, 4]];
+const avoid = [[0, 0, 6], [20, -22, 9], [-24, -22, 11], [-12, 14, 3], [16, 12, 4], [-6, -22, 4], [30, 8, 4.5], [-20, 30, 4.5]];
 function freeSpot(minR, maxR) {
   for (let k = 0; k < 60; k++) {
     const a = Math.random() * Math.PI * 2, r = rnd(minR, maxR), x = Math.cos(a) * r, z = Math.sin(a) * r;
@@ -161,6 +162,32 @@ export const wheels = [];
 }
 addHost(tractor, new V3(0, 1.98, -0.45), { label: 'the old tractor', drivable: true, speed: 8, dist: 7.5, kind: 'tractor' });
 addCircle(0, 0, 1.6, tractor);
+
+// --- burrows: mounds only a head fits into. Sit inside to peek around. ---
+const BURROW_R = 1.6;
+const earth = new THREE.MeshLambertMaterial({ color: 0x3a3128, side: THREE.DoubleSide });
+/** Hollow mound with an opening facing local +Z. `fill(group)` adds whatever is inside. */
+export function makeBurrow(x, z, yaw, opts, fill) {
+  const b = new THREE.Group(); b.position.set(x, hAt(x, z) - 0.08, z); b.rotation.y = yaw;
+  const gap = 0.9;
+  const dome = new THREE.Mesh(new THREE.SphereGeometry(BURROW_R, 18, 8, Math.PI / 2 + gap / 2, Math.PI * 2 - gap, 0, Math.PI / 2), earth);
+  const lintel = new THREE.Mesh(new THREE.SphereGeometry(BURROW_R, 5, 5, Math.PI / 2 - gap / 2, gap, 0, 0.75), earth);
+  const shell = new THREE.Group(); shell.add(dome, lintel); shell.scale.y = 0.8; b.add(shell);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(BURROW_R, 18), lam(0x1c1815)); floor.rotation.x = -Math.PI / 2; floor.position.y = 0.22; b.add(floor);
+  if (fill) fill(b);
+  scene.add(b); addCircle(x, z, BURROW_R);
+  return addHost(b, new V3(0, 0.6, 0.95), Object.assign({ label: 'the burrow', verb: 'peek into', btn: 'Peek in', who: 'inside the burrow', kind: 'burrow' }, opts));
+}
+// This one holds a lost head (see SPOTS in memories.js): only peeking in finds it.
+makeBurrow(30, 8, -1.9, { hint: '' });
+// This one holds a nest. One of them is awake.
+makeBurrow(-20, 30, 2.4, { hint: 'They sleep better down here.<br>Count them. Then count again.' }, (b) => {
+  const spots = [[-0.55, -0.5], [0.05, -0.85], [0.6, -0.45], [-0.12, -0.5], [0.35, -0.95]];
+  spots.forEach(([hx, hz], i) => {
+    const h = makeHead(0xb9b7bd, i !== 3); h.scale.setScalar(0.8);
+    h.position.set(hx, 0.48 + (i === 4 ? 0.42 : 0), hz); h.rotation.set(rnd(-0.3, 0.3), Math.atan2(-hx, 0.95 - hz) + (i === 3 ? 0 : rnd(-1.2, 1.2)), rnd(-0.4, 0.4)); b.add(h);
+  });
+});
 
 // --- idle headless flock members that turn to watch you ---
 export const idleFlock = [];

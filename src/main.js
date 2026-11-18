@@ -11,6 +11,9 @@ import { updateMemories, setOnAllFound } from './memories.js';
 import { render } from './camera.js';
 import { startWind } from './audio.js';
 
+// Dev-only handle for poking at the game from the console.
+if (import.meta.env.DEV) window.dbg = { state, head, llama };
+
 // --- start ---
 $('startBtn').addEventListener('click', () => {
   $('intro').style.display = 'none';

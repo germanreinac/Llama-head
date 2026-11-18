@@ -56,7 +56,7 @@ function throwHead() {
   head.vel.set(f.x * 6 + llama.vel.x, 5, f.z * 6 + llama.vel.z);
   head.yaw = llama.yaw;
   state.control = 'head';
-  hintOnce('throw', isTouch ? 'Your head is off. <b>Switch</b> jumps between head and body.' : 'Your head is off. <b>Q</b> switches between head and body.', 6);
+  hintOnce('throw', isTouch ? 'Your head is off. <b>Be body</b> and <b>Be head</b> switch between the two.' : 'Your head is off. <b>Q</b> switches between head and body.', 6);
 }
 
 function pickUp() {
@@ -68,7 +68,9 @@ function sitOn(h) {
   head.state = 'host'; head.host = h; state.control = 'host'; h.speedNow = 0;
   if (h.kind === 'cow') setCowStanding(true);
   if (!h.drivable) state.camPitch = 0.3;
-  hintOnce('host' + (h.drivable ? 'd' : 's'),
+  if (h.kind === 'burrow') state.camYaw = h.obj.rotation.y + Math.PI; // face inwards
+  if (h.hint !== null) { if (h.hint) hintOnce('host:' + h.hint, h.hint, 7); }
+  else hintOnce('host' + (h.drivable ? 'd' : 's'),
     h.drivable ? `You are ${h.label} now. Drive it around.` : `You see through ${h.label}'s eyes now. Look around.`, 5);
 }
 

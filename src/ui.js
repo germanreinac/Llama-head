@@ -46,10 +46,10 @@ export function updateUI(dt) {
   } else if (c === 'head') {
     who = 'your head'; q = 'Be body';
     const host = nearHost();
-    if (host) { f = 'Sit on'; prompt = (isTouch ? 'Sit on ' : 'F · sit on ') + host.label; }
+    if (host) { f = host.btn; prompt = (isTouch ? host.verb[0].toUpperCase() + host.verb.slice(1) + ' ' : 'F · ' + host.verb + ' ') + host.label; }
     else prompt = isTouch ? '' : 'Q · switch to your body';
   } else if (c === 'host') {
-    who = head.host.label; q = 'Be body'; f = 'Hop off'; j = '';
+    who = head.host.who || head.host.label; q = 'Be body'; f = 'Hop off'; j = '';
     prompt = isTouch ? '' : (head.host.drivable ? 'WASD · drive   F · hop off' : 'Drag · look around   F · hop off');
   }
 
