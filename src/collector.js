@@ -3,11 +3,12 @@ import { V3, hAt, d2, rnd, lerpAngle, clampR } from './utils.js';
 import { state } from './state.js';
 import { scene, lam, basic, unitSph } from './scene.js';
 import { head, headMesh, llama, leaveHost } from './player.js';
-import { say } from './ui.js';
+import { say, hintOnce } from './ui.js';
 
 /**
  * The collector: a tall figure in the fog that takes heads nobody is watching.
- * wander -> hunt (your head is off and you're not controlling it)
+ * By day the sun marks it with a shaft of light and drives it off. At night:
+ * wander -> hunt (your head is off its neck)
  *        -> carry (it has your head, runs from your body)
  *        -> flee  (your body caught up and it dropped the head)
  */
@@ -23,6 +24,12 @@ const g = new THREE.Group();
   g.position.set(40, hAt(40, 30), 30);
   scene.add(g);
 }
+// The sun's mark: a shaft of light on the collector while the sun is awake. Shows through fog.
+const beamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 70, 10, 1, true), beamMat);
+beam.position.y = 35; g.add(beam);
+let glare = 0; // flares when the sun drives it off
+const SUN_REACH = 9; // by day it may not come closer than this to you or your head
 
 export const collector = { g, state: 'wander', target: new V3(30, 0, 20), timer: 0, yaw: 0, hand: new V3(0.4, 0.95, 0.2) };
 const C = collector;
@@ -32,9 +39,29 @@ const qUp = new THREE.Quaternion(), eTmp = new THREE.Euler();
 export function updateCollector(dt) {
   const t = state.t;
   const headFree = head.state === 'loose' || head.state === 'host';
-  const unwatched = headFree && state.control !== 'head' && state.control !== 'host';
+  // By day the sun protects you. At night any head that is off its neck can be taken,
+  // even while you are rolling it.
+  const unwatched = headFree && !state.day;
   const dHead = d2(g.position, head.pos), dBody = d2(g.position, llama.pos);
   let dir = null, sp = 0;
+
+  if (state.day && C.state !== 'flee') {
+    const tooClose = Math.min(dBody, headFree ? dHead : 99) < SUN_REACH;
+    if (C.state === 'carry') { // the sun makes it drop your head
+      head.state = 'loose';
+      head.pos.set(g.position.x, g.position.y + 1.2, g.position.z);
+      head.vel.set(rnd(-2, 2), 4.5, rnd(-2, 2));
+      state.control = 'head';
+      say('The sun woke up and it dropped your head.', 5);
+    }
+    if (C.state === 'carry' || C.state === 'hunt' || tooClose) {
+      if (tooClose && C.state === 'wander') hintOnce('sun', 'The sun saw it before you did.<br>While the sun is awake, the tall one cannot come near.', 7);
+      C.state = 'flee'; C.timer = 0; glare = 1;
+    }
+  }
+  glare = Math.max(0, glare - dt * 0.5);
+  beamMat.opacity = state.dayMix * (0.16 + 0.5 * glare);
+  beam.visible = beamMat.opacity > 0.01;
 
   if (C.state === 'wander') {
     C.timer += dt;
@@ -44,7 +71,7 @@ export function updateCollector(dt) {
     }
     dir = C.target.clone().sub(g.position); sp = 1.5;
     if (dBody < 6 && head.state === 'body') { dir = g.position.clone().sub(llama.pos); sp = 2.5; } // shy around a whole llama
-    if (unwatched && dHead < 24 && state.found >= 1) C.state = 'hunt';
+    if (unwatched && dHead < 30) C.state = 'hunt';
   } else if (C.state === 'hunt') {
     if (!unwatched) { C.state = 'wander'; C.timer = 99; }
     else {

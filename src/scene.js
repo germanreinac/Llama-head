@@ -19,10 +19,12 @@ export const cam = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.0
 export const pipCam = new THREE.PerspectiveCamera(72, 1.4, 0.05, 200);
 
 // Light intensities are multiplied by PI to match the old (pre-r155) lighting units.
-scene.add(new THREE.HemisphereLight(0x9a9a9a, 0x1c1c1c, 0.75 * Math.PI));
-const moon = new THREE.DirectionalLight(0xc8c8c8, 0.55 * Math.PI);
-moon.position.set(-30, 40, 20);
-scene.add(moon);
+export const hemi = new THREE.HemisphereLight(0x9a9a9a, 0x1c1c1c, 0.75 * Math.PI);
+scene.add(hemi);
+/** The sun's (or moon's) light. sky.js dims it at night. */
+export const skyLight = new THREE.DirectionalLight(0xc8c8c8, 0.55 * Math.PI);
+skyLight.position.set(-30, 40, 20);
+scene.add(skyLight);
 
 /**
  * Greybox: every material is reduced to its brightness, so the prototype carries

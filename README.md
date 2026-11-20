@@ -10,8 +10,9 @@ A browser prototype of a foggy, creepy exploration game. You're a llama whose sp
 - **Roll your head where your body can't go.** The fenced pen has no gate. Heads roll under the rails, bodies don't fit.
 - **Sit your head on things.** Fence posts and the headless scarecrow give you their viewpoint. The sleeping cow and the old tractor become drivable.
 - **Peek into burrows.** Low mounds only a head fits into. One hides a lost head, one hides a nest.
-- **Six lost heads** glow in the fog. Each one gives you a fragment of the story. When you find all six, the flock appears.
-- **The collector.** A tall figure that takes heads nobody is watching. If it steals yours, chase it down with your blind body.
+- **Six lost heads** glow in the fog. Each one gives you a fragment of the story. When you find all six, the fog thins.
+- **The sun is on your side.** While it is awake it marks the collector with a shaft of light and drives it away from you. There is no sunset: it just switches off, becomes the moon and sleeps. At night nothing protects you.
+- **The collector.** A tall figure that takes heads at night, even one you are rolling. If it steals yours, chase it down with your blind body.
 
 All models are grey placeholder primitives (greybox). No art direction yet.
 
@@ -41,8 +42,9 @@ npm run build    # production build in dist/
 | `src/main.js` | Start screen, ending, game loop |
 | `src/state.js` | Shared state (who you control, camera angles, progress) |
 | `src/player.js` | Llama body + head, actions (pop, switch, sit, jump) |
-| `src/world.js` | Terrain, barn, trees, fences/pen, scarecrow, cow, tractor, burrows, idle flock, fog wisps; hosts the head can sit on |
+| `src/world.js` | Terrain, barn, trees, fences/pen, scarecrow, cow, tractor, burrows, fog wisps; hosts the head can sit on |
 | `src/collector.js` | The head-stealing figure |
+| `src/sky.js` | The sun: day and night, light and fog, the disc in the sky |
 | `src/memories.js` | Lost heads and story lines |
 | `src/camera.js` | Main camera, picture-in-picture view, fog per view |
 | `src/input.js` | Keyboard, joystick, drag-to-look, touch buttons |

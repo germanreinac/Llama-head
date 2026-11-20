@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { V3, rnd, hAt, d2, isTouch } from './utils.js';
 import { scene, lam, grey } from './scene.js';
 import { addCircle, addBox } from './physics.js';
-import { makeLlamaBody, makeHead, radialTex } from './models.js';
+import { makeHead, radialTex } from './models.js';
 
 // ---------------------------------------------------------------------------
 // Hosts: things the head can sit on. Static ones give a new viewpoint,
@@ -179,13 +179,6 @@ makeBurrow(-20, 30, 2.4, { hint: 'They sleep better down here.<br>Count them. Th
     h.position.set(hx, 0.48 + (i === 4 ? 0.42 : 0), hz); h.rotation.set(rnd(-0.3, 0.3), Math.atan2(-hx, 0.95 - hz) + (i === 3 ? 0 : rnd(-1.2, 1.2)), rnd(-0.4, 0.4)); b.add(h);
   });
 });
-
-// --- idle headless flock members that turn to watch you ---
-export const idleFlock = [];
-for (const [x, z] of [[-6, 27], [26, 30], [-38, 0], [34, -6]]) {
-  const b = makeLlamaBody(0xcfc6b5); b.g.position.set(x, hAt(x, z), z); b.g.rotation.y = rnd(0, 6);
-  scene.add(b.g); idleFlock.push(b); addCircle(x, z, 0.6);
-}
 
 // --- drifting fog wisps ---
 export const wisps = [];

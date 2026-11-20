@@ -16,4 +16,7 @@ export const state = {
   camPitch: 0.35,
   found: 0,
   fogFarBase: 34,
+  day: true,      // the sun is awake (see sky.js)
+  dayT: 0,        // seconds into the current day or night
+  dayMix: 1,      // 0 night .. 1 day, eased
 };

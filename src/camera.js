@@ -3,6 +3,7 @@ import { state } from './state.js';
 import { renderer, scene, cam, pipCam } from './scene.js';
 import { head, headMesh, llama } from './player.js';
 import { collector } from './collector.js';
+import { placeSky } from './sky.js';
 
 const pipEl = document.getElementById('pip');
 const pipLabel = document.getElementById('pipLabel');
@@ -55,8 +56,10 @@ function placeCams(dt) {
 
 export function render(dt) {
   const { fp, pip } = placeCams(dt), w = innerWidth, h = innerHeight;
+  placeSky();
   const blind = state.control === 'body'; // the headless body barely sees
-  fogFar += ((blind ? 9 : state.fogFarBase) - fogFar) * Math.min(1, dt * 2);
+  const fogBase = state.fogFarBase * (0.72 + 0.6 * state.dayMix); // nights are thicker
+  fogFar += ((blind ? 9 : fogBase) - fogFar) * Math.min(1, dt * 2);
   vig.style.opacity = blind ? 0.85 : (state.control === 'host' && !head.host.drivable ? 0.3 : 0);
 
   renderer.setScissorTest(false); renderer.setViewport(0, 0, w, h);
@@ -70,7 +73,7 @@ export function render(dt) {
   pipEl.style.display = 'block'; pipEl.style.width = pw + 'px'; pipEl.style.height = ph + 'px';
   const x = w - pw - 12, y = h - ph - 12;
   renderer.setScissorTest(true); renderer.setScissor(x, y, pw, ph); renderer.setViewport(x, y, pw, ph);
-  scene.fog.near = 3; scene.fog.far = state.fogFarBase; // the head sees clearly
+  scene.fog.near = 3; scene.fog.far = fogBase; // the head sees clearly
   pipCam.aspect = pw / ph; pipCam.updateProjectionMatrix();
   headMesh.visible = pip !== 'eye';
   renderer.render(scene, pipCam);
