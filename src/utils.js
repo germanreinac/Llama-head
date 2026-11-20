@@ -25,7 +25,9 @@ export function hAt(x, z) {
     + 0.1 * Math.cos(z * 0.5 - x * 0.1);
 }
 
-export const WORLD_R = 52;
+export const WORLD_R = 100;
+/** The open farm is inside this radius; the forest fills the ring from here to WORLD_R. */
+export const FARM_R = 58;
 export function clampR(p) {
   const r = Math.hypot(p.x, p.z);
   if (r > WORLD_R) { p.x *= WORLD_R / r; p.z *= WORLD_R / r; }

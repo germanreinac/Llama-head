@@ -3,7 +3,7 @@
  *
  * control: who the player is driving right now
  *   'llama' – the whole llama, head on
- *   'body'  – the headless body (nearly blind)
+ *   'body'  – the headless body (sees a little less)
  *   'head'  – the loose head, rolling
  *   'host'  – the head sitting on something (post, scarecrow, cow, tractor)
  */

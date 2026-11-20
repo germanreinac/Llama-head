@@ -9,6 +9,9 @@ const pipEl = document.getElementById('pip');
 const pipLabel = document.getElementById('pipLabel');
 const vig = document.getElementById('vignette');
 
+/** How far the headless body sees compared with the head (1 = the same). */
+const BODY_SIGHT = 0.8;
+
 const camLook = new V3(0, 1.5, 0);
 let fogFar = 34;
 
@@ -57,13 +60,13 @@ function placeCams(dt) {
 export function render(dt) {
   const { fp, pip } = placeCams(dt), w = innerWidth, h = innerHeight;
   placeSky();
-  const blind = state.control === 'body'; // the headless body barely sees
-  const fogBase = state.fogFarBase * (0.72 + 0.6 * state.dayMix); // nights are thicker
-  fogFar += ((blind ? 9 : fogBase) - fogFar) * Math.min(1, dt * 2);
-  vig.style.opacity = blind ? 0.85 : (state.control === 'host' && !head.host.drivable ? 0.3 : 0);
+  const blind = state.control === 'body'; // the headless body sees a little less (BODY_SIGHT)
+  const fogBase = state.fogFarBase * (0.95 + 0.35 * state.dayMix); // nights are a little thicker
+  fogFar += ((blind ? fogBase * BODY_SIGHT : fogBase) - fogFar) * Math.min(1, dt * 2);
+  vig.style.opacity = blind ? 0.15 : (state.control === 'host' && !head.host.drivable ? 0.3 : 0);
 
   renderer.setScissorTest(false); renderer.setViewport(0, 0, w, h);
-  scene.fog.near = blind ? 0.5 : 3; scene.fog.far = fogFar;
+  scene.fog.near = 3; scene.fog.far = fogFar;
   cam.aspect = w / h; cam.updateProjectionMatrix();
   headMesh.visible = !fp;
   renderer.render(scene, cam);

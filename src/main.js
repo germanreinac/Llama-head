@@ -48,7 +48,7 @@ function update(dt) {
   updateCollector(dt);
   syncHeadMesh();
   updateMemories(dt);
-  for (const w of wisps) { w.position.x += w.userData.v * dt; if (w.position.x > 55) w.position.x = -55; }
+  for (const w of wisps) { w.position.x += w.userData.v * dt; if (w.position.x > 105) w.position.x = -105; }
   updateUI(dt);
 }
 

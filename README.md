@@ -6,12 +6,13 @@ A browser prototype of a foggy, creepy exploration game. You're a llama whose sp
 
 ## The idea so far
 
-- **Pop your head off.** You switch between controlling the head and the body. The headless body is nearly blind (dense fog). A picture-in-picture window shows what the other half of you sees.
+- **Pop your head off.** You switch between controlling the head and the body. The headless body sees a little less far. A picture-in-picture window shows what the other half of you sees.
 - **Roll your head where your body can't go.** The fenced pen has no gate. Heads roll under the rails, bodies don't fit.
 - **Sit your head on things.** Fence posts and the headless scarecrow give you their viewpoint. The sleeping cow and the old tractor become drivable.
 - **Peek into burrows.** Low mounds only a head fits into. One hides a lost head, one hides a nest.
+- **A forest rings the farm.** The open farm sits in the middle of a wider wood. Two of the lost heads are in clearings among the trees.
 - **Six lost heads** glow in the fog. Each one gives you a fragment of the story. When you find all six, the fog thins.
-- **The sun is on your side.** While it is awake it marks the collector with a shaft of light and drives it away from you. There is no sunset: it just switches off, becomes the moon and sleeps. At night nothing protects you.
+- **The sun is on your side.** While it is awake it crosses the sky, points beams from its eyes at the collector and drives it away from you. There is no sunset: it just switches off, becomes the moon and sleeps. At night nothing protects you. Nights are only a little darker than days.
 - **The collector.** A tall figure that takes heads at night, even one you are rolling. If it steals yours, chase it down with your blind body.
 
 All models are grey placeholder primitives (greybox). No art direction yet.

@@ -17,8 +17,9 @@ export const MEM_TEXT = [
 ];
 
 // [-24,-22] is inside the gateless pen: only a rolling head can reach it.
+// [-70,28] and [56,-58] are in forest clearings (world.js).
 // [30,8] is inside a burrow (world.js): only a head peeking in can reach it.
-const SPOTS = [[5, 9], [-24, -22], [30, 8], [-34, 22], [8, -40], [38, -34]];
+const SPOTS = [[5, 9], [-24, -22], [30, 8], [-70, 28], [8, -40], [56, -58]];
 
 const glow = radialTex('rgba(235,235,235,1)', 'rgba(210,210,210,.45)');
 export const memories = SPOTS.map(([x, z], i) => {

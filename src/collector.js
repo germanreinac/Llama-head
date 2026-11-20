@@ -7,7 +7,7 @@ import { say, hintOnce } from './ui.js';
 
 /**
  * The collector: a tall figure in the fog that takes heads nobody is watching.
- * By day the sun marks it with a shaft of light and drives it off. At night:
+ * By day the sun points its eye beams at it (sky.js) and drives it off. At night:
  * wander -> hunt (your head is off its neck)
  *        -> carry (it has your head, runs from your body)
  *        -> flee  (your body caught up and it dropped the head)
@@ -24,14 +24,9 @@ const g = new THREE.Group();
   g.position.set(40, hAt(40, 30), 30);
   scene.add(g);
 }
-// The sun's mark: a shaft of light on the collector while the sun is awake. Shows through fog.
-const beamMat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
-const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 70, 10, 1, true), beamMat);
-beam.position.y = 35; g.add(beam);
-let glare = 0; // flares when the sun drives it off
 const SUN_REACH = 9; // by day it may not come closer than this to you or your head
 
-export const collector = { g, state: 'wander', target: new V3(30, 0, 20), timer: 0, yaw: 0, hand: new V3(0.4, 0.95, 0.2) };
+export const collector = { g, state: 'wander', target: new V3(30, 0, 20), timer: 0, yaw: 0, glare: 0, hand: new V3(0.4, 0.95, 0.2) };
 const C = collector;
 
 const qUp = new THREE.Quaternion(), eTmp = new THREE.Euler();
@@ -56,17 +51,15 @@ export function updateCollector(dt) {
     }
     if (C.state === 'carry' || C.state === 'hunt' || tooClose) {
       if (tooClose && C.state === 'wander') hintOnce('sun', 'The sun saw it before you did.<br>While the sun is awake, the tall one cannot come near.', 7);
-      C.state = 'flee'; C.timer = 0; glare = 1;
+      C.state = 'flee'; C.timer = 0; C.glare = 1;
     }
   }
-  glare = Math.max(0, glare - dt * 0.5);
-  beamMat.opacity = state.dayMix * (0.16 + 0.5 * glare);
-  beam.visible = beamMat.opacity > 0.01;
+  C.glare = Math.max(0, C.glare - dt * 0.5);
 
   if (C.state === 'wander') {
     C.timer += dt;
     if (d2(g.position, C.target) < 1.5 || C.timer > 12) {
-      const a = Math.random() * Math.PI * 2, r = rnd(15, 45);
+      const a = Math.random() * Math.PI * 2, r = rnd(15, 85);
       C.target.set(Math.cos(a) * r, 0, Math.sin(a) * r); C.timer = 0;
     }
     dir = C.target.clone().sub(g.position); sp = 1.5;

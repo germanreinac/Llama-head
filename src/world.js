@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { V3, rnd, hAt, d2, isTouch } from './utils.js';
+import { V3, rnd, hAt, d2, isTouch, WORLD_R, FARM_R } from './utils.js';
 import { scene, lam, grey } from './scene.js';
 import { addCircle, addBox } from './physics.js';
 import { makeHead, radialTex } from './models.js';
@@ -32,7 +32,7 @@ function freeSpot(minR, maxR) {
 
 // --- ground ---
 {
-  const g = new THREE.PlaneGeometry(220, 220, 150, 150); g.rotateX(-Math.PI / 2);
+  const g = new THREE.PlaneGeometry(300, 300, 190, 190); g.rotateX(-Math.PI / 2);
   const p = g.attributes.position, cols = [], c = new THREE.Color();
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i); p.setY(i, hAt(x, z));
@@ -64,13 +64,36 @@ for (let i = 0; i < 34; i++) {
   t.rotation.y = rnd(0, 6); scene.add(t); addCircle(x, z, 0.45); avoid.push([x, z, 1.5]);
 }
 
+// --- forest: a ring of tall trees around the farm (instanced: one trunk and one crown each) ---
+// Clearings a lost head sits in (see SPOTS in memories.js): [x, z, radius]
+const clearings = [[-70, 28, 5], [56, -58, 5]];
+{
+  const N = isTouch ? 240 : 380;
+  const trunkG = new THREE.CylinderGeometry(0.16, 0.42, 1, 6); trunkG.translate(0, 0.5, 0);
+  const crownG = new THREE.ConeGeometry(1, 1, 7); crownG.translate(0, 0.5, 0);
+  const trunks = new THREE.InstancedMesh(trunkG, lam(0x262626), N), crowns = new THREE.InstancedMesh(crownG, lam(0x333333), N);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), placed = [];
+  for (let i = 0, tries = 0; i < N && tries < N * 40; tries++) {
+    const a = Math.random() * Math.PI * 2, r = Math.sqrt(rnd(FARM_R * FARM_R, (WORLD_R + 3) * (WORLD_R + 3)));
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (clearings.some(([cx, cz, cr]) => Math.hypot(x - cx, z - cz) < cr)) continue;
+    if (placed.some(([px, pz]) => Math.hypot(x - px, z - pz) < 2.4)) continue;
+    const h = rnd(7, 12), y = hAt(x, z);
+    m4.compose(new V3(x, y, z), q, new V3(1, h, 1)); trunks.setMatrixAt(i, m4);
+    m4.compose(new V3(x, y + h * 0.45, z), q, new V3(rnd(1.6, 2.4), h * 0.7, rnd(1.6, 2.4))); crowns.setMatrixAt(i, m4);
+    addCircle(x, z, 0.5); placed.push([x, z]); i++;
+  }
+  trunks.count = crowns.count = placed.length;
+  scene.add(trunks, crowns);
+}
+
 // --- grass ---
 {
   const tg = new THREE.ConeGeometry(0.06, 0.45, 3); tg.translate(0, 0.22, 0);
-  const N = isTouch ? 2500 : 4500, im = new THREE.InstancedMesh(tg, lam(0x3a482d), N);
+  const N = isTouch ? 4000 : 8000, im = new THREE.InstancedMesh(tg, lam(0x3a482d), N);
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
   for (let i = 0; i < N; i++) {
-    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 58, x = Math.cos(a) * r, z = Math.sin(a) * r, s = rnd(0.6, 1.8);
+    const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * (WORLD_R + 4), x = Math.cos(a) * r, z = Math.sin(a) * r, s = rnd(0.6, 1.8);
     q.setFromEuler(e.set(rnd(-0.25, 0.25), rnd(0, 6), rnd(-0.25, 0.25)));
     m4.compose(new V3(x, hAt(x, z), z), q, new V3(s, s, s)); im.setMatrixAt(i, m4);
   }
@@ -184,9 +207,9 @@ makeBurrow(-20, 30, 2.4, { hint: 'They sleep better down here.<br>Count them. Th
 export const wisps = [];
 {
   const tex = radialTex('rgba(210,210,210,.5)', null, 128);
-  for (let i = 0; i < 46; i++) {
+  for (let i = 0; i < 110; i++) {
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: rnd(0.08, 0.18) }));
-    const sc = rnd(8, 16); s.scale.set(sc, sc * 0.45, 1); s.position.set(rnd(-50, 50), rnd(0.6, 2.2), rnd(-50, 50));
+    const sc = rnd(8, 16); s.scale.set(sc, sc * 0.45, 1); s.position.set(rnd(-100, 100), rnd(0.6, 2.2), rnd(-100, 100));
     s.userData.v = rnd(0.3, 0.8); scene.add(s); wisps.push(s);
   }
 }
